@@ -37,6 +37,7 @@ namespace MediaBrowser.MediaEncoding.Subtitles
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IMediaSourceManager _mediaSourceManager;
         private readonly ISubtitleParser _subtitleParser;
+        private readonly LocalFonts _localFonts;
 
         /// <summary>
         /// The _semaphoreLocks.
@@ -63,6 +64,7 @@ namespace MediaBrowser.MediaEncoding.Subtitles
             _httpClientFactory = httpClientFactory;
             _mediaSourceManager = mediaSourceManager;
             _subtitleParser = subtitleParser;
+            _localFonts = new(fileSystem,null);// TODO
         }
 
         private string SubtitleCachePath => Path.Combine(_appPaths.DataPath, "subtitles");
@@ -124,6 +126,7 @@ namespace MediaBrowser.MediaEncoding.Subtitles
 
         async Task<Stream> ISubtitleEncoder.GetSubtitles(BaseItem item, string mediaSourceId, int subtitleStreamIndex, string outputFormat, long startTimeTicks, long endTimeTicks, bool preserveOriginalTimestamps, CancellationToken cancellationToken)
         {
+            // TODO cache result
             ArgumentNullException.ThrowIfNull(item);
 
             if (string.IsNullOrWhiteSpace(mediaSourceId))
@@ -259,9 +262,10 @@ namespace MediaBrowser.MediaEncoding.Subtitles
         {
             ArgumentException.ThrowIfNullOrEmpty(format);
 
-            if (string.Equals(format, SubtitleFormat.ASS, StringComparison.OrdinalIgnoreCase))
+            if (format.StartsWith(SubtitleFormat.ASS, StringComparison.OrdinalIgnoreCase))
             {
-                value = new AssWriter();
+                bool subsetFonts = format.EndsWith("+subsetting", StringComparison.Ordinal);
+                value = subsetFonts ? new AssWriter(_localFonts) : new AssWriter();
                 return true;
             }
 

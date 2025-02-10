@@ -13,6 +13,29 @@ namespace MediaBrowser.MediaEncoding.Subtitles;
 /// </summary>
 public partial class AssWriter : ISubtitleWriter
 {
+    private readonly LocalFonts? _fontStore;
+    private readonly bool _subset;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AssWriter"/> class.
+    /// </summary>
+    /// <param name="fontStore">The set of fonts for embedding into the resulting ASS stream.</param>
+    /// <param name="subset">Whether to subset fonts in addition to embedding.</param>
+    public AssWriter(LocalFonts? fontStore = null, bool subset = false)
+    {
+        if (fontStore == null && subset)
+        {
+            throw new ArgumentNullException(nameof(subset), "Cannot subset fonts when not embedding fonts in the first place");
+        }
+
+        _fontStore = fontStore;
+        _subset = subset;
+    }
+
+    private bool EmbedFonts => _fontStore != null;
+
+    private bool SubsetFonts => EmbedFonts && _subset;
+
     [GeneratedRegex(@"\n", RegexOptions.IgnoreCase)]
     private static partial Regex NewLineRegex();
 
@@ -50,6 +73,14 @@ public partial class AssWriter : ISubtitleWriter
                     startTime,
                     endTime,
                     text);
+            }
+
+            if (EmbedFonts)
+            {
+                // TODO subset
+
+                writer.WriteLine();
+                writer.WriteLine("[Fonts]");
             }
         }
     }

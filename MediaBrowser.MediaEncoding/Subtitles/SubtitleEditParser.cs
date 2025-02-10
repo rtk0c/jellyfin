@@ -11,6 +11,10 @@ using SubtitleFormat = Nikse.SubtitleEdit.Core.SubtitleFormats.SubtitleFormat;
 
 namespace MediaBrowser.MediaEncoding.Subtitles;
 
+// TODO(rtk0c): figure out a way for Nikse.SubtitleEdit to take out ASS subtitles specifically and stuff into a more specific version of SubtitleTrackInfo
+//   or just reuse Nikse `Subtitle` in jellyfin code?
+//   observation: it has some Paragraph and Line constructs, so maybe it's not specific enough? TODO read wyzdwdz/assfonts code (it's also GPL, same as jellyfin)
+
 /// <summary>
 /// SubStation Alpha subtitle parser.
 /// </summary>

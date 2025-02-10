@@ -203,6 +203,7 @@ public class SubtitleController : BaseJellyfinApiController
     /// <param name="copyTimestamps">Optional. Whether to copy the timestamps.</param>
     /// <param name="addVttTimeMap">Optional. Whether to add a VTT time map.</param>
     /// <param name="startPositionTicks">The start position of the subtitle in ticks.</param>
+    /// <param name="subsetFonts">Optional. Whether to embed fonts into an ASS subtitle.</param>,
     /// <response code="200">File returned.</response>
     /// <returns>A <see cref="FileContentResult"/> with the subtitle file.</returns>
     [HttpGet("Videos/{routeItemId}/{routeMediaSourceId}/Subtitles/{routeIndex}/Stream.{routeFormat}")]
@@ -220,7 +221,8 @@ public class SubtitleController : BaseJellyfinApiController
         [FromQuery] long? endPositionTicks,
         [FromQuery] bool copyTimestamps = false,
         [FromQuery] bool addVttTimeMap = false,
-        [FromQuery] long startPositionTicks = 0)
+        [FromQuery] long startPositionTicks = 0,
+        [FromQuery] bool subsetFonts = false)
     {
         // Set parameters to route value if not provided via query.
         itemId ??= routeItemId;
@@ -267,7 +269,8 @@ public class SubtitleController : BaseJellyfinApiController
                 itemId.Value,
                 mediaSourceId,
                 index.Value,
-                format,
+                // TODO this is jank ass
+                subsetFonts ? $"{format}+subsetting" : format,
                 startPositionTicks,
                 endPositionTicks,
                 copyTimestamps).ConfigureAwait(false),
@@ -506,13 +509,7 @@ public class SubtitleController : BaseJellyfinApiController
         {
             var files = _fileSystem.GetFiles(fallbackFontPath, new[] { ".woff", ".woff2", ".ttf", ".otf" }, false, false);
             var fontFiles = files
-                .Select(i => new FontFile
-                {
-                    Name = i.Name,
-                    Size = i.Length,
-                    DateCreated = _fileSystem.GetCreationTimeUtc(i),
-                    DateModified = _fileSystem.GetLastWriteTimeUtc(i)
-                })
+                .Select(i => new FontFile { Name = i.Name, Size = i.Length, DateCreated = _fileSystem.GetCreationTimeUtc(i), DateModified = _fileSystem.GetLastWriteTimeUtc(i) })
                 .OrderBy(i => i.Size)
                 .ThenBy(i => i.Name)
                 .ThenByDescending(i => i.DateModified)
